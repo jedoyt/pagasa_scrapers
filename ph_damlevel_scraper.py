@@ -83,7 +83,8 @@ datestamp = now_split[0] # 'yyyy-mm-dd'
 filename = "PH_Dams_" + datestamp + "_0600.csv"
 
 # Convert pandas dataframe into a csv file
-dam_df.to_csv(filename, sep=',', header=True, index=True)
+dam_df.to_csv(filename, sep=',', header=True, index=False)
 
 # Report output:
 print("File created last " + str(datetime.datetime.now()) + ": " + filename)
+print(dam_df)
