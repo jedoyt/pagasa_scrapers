@@ -3,8 +3,9 @@
 # source: http://bagong.pagasa.dost.gov.ph/weather
 
 # Import needed libraries
-import requests, bs4, datetime
+import requests, bs4
 import pandas as pd
+from datetime import datetime, timedelta
 
 # Request and download webpage
 # Create a request object connecting to PAGASA Website
@@ -52,22 +53,33 @@ for col in list(TempRH.columns):
 # Apply corrections
 TempRH = TempRH.rename(columns=col_rename)
 
-# Add a column stating the date of observation.
-TempRH['Date'] = datetime.datetime.now().strftime('%m-%d-%Y ')
+# Add a column stating the date of observation which is yesterday
+# So we'll just have to subract 1 day from current date
+date_observed = datetime.now() - timedelta(days=1)
+TempRH['Date of Observation'] = date_observed.strftime("%m/%d/%Y")
+
+# Add a column stating the date and time of data issuance
+datetime_issued = soup.find_all('h5',class_='pull-right dev')[0].get_text().split(',')
+date_issued = datetime_issued[1]
+time_issued = ' '.join(datetime_issued[0].split()[2:])
+TempRH['Data Issued'] = "{}, {}".format(date_issued,time_issued)
 
 # Parse dates under 'Date & Time' column
-TempRH['Date'] = pd.to_datetime(TempRH['Date'])
+TempRH['Data Issued'] = pd.to_datetime(TempRH['Data Issued'])
+
+# Rearrange columns making 'Date of Observation as the first column
+TempRH = TempRH[['Date of Observation', 'Parameter', 'Max Value', 'Max Time', 'Min Value', 'Min Time','Data Issued']]
 
 # Convert pandas dataframe to csv file
 # filename must have a datestamp appended.
 # Create a filename for the csv containing a timestamp
-now = str(datetime.datetime.now())
-now_split = now.split() # ['yyyy-mm-dd','hh:mm:ss.xxxxxx']
-datestamp = now_split[0] # 'yyyy-mm-dd'
+datetime_split = str(date_observed).split() # ['yyyy-mm-dd','hh:mm:ss.xxxxxx']
+datestamp = datetime_split[0] # 'yyyy-mm-dd'
 filename = "PH_TempRH_" + datestamp + ".csv"
 
 # Convert pandas dataframe into a csv file
-TempRH.to_csv(filename, sep=',', header=True, index=True)
+TempRH.to_csv(filename, sep=',', header=True, index=False)
 
 # Report output:
-print("File created last " + str(datetime.datetime.now()) + ": " + filename)
+print("File created last " + str(datetime.now()) + ": " + filename)
+print(TempRH)
